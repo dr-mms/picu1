@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Pediatric Emergency Calculator</title>
+    <style>
+        /* General Body and Page Styles */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.5;
+            background-color: #f0f0f0;
+            color: #000;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 25px;
+            border: 1px solid #ccc;
+        }
+
+        /* Headings */
+        h1, h2 {
+            color: #000;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            margin-top: 30px;
+        }
+
+        /* Form Styling */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #999;
+            border-radius: 4px;
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #000;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 12px 20px;
+            border: 1px solid #000;
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 15px;
+        }
+
+        .btn-primary {
+            background-color: #333;
+            color: #fff;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background-color: #000;
+        }
+        
+        .btn-secondary {
+            background-color: #eee;
+            color: #000;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #ddd;
+        }
+
+        /* --- PRINTABLE REPORT STYLES --- */
+        #printableReport {
+            margin-top: 30px;
+            border-top: 2px solid #000;
+            padding-top: 20px;
+            display: none; /* Hidden by default */
+        }
+        
+        /* Patient Header Box */
+        .patient-header-box {
+            border: 2px solid #000;
+            padding: 15px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .patient-header-box div {
+            font-size: 1.2em;
+        }
+        .patient-header-box strong {
+            font-weight: bold;
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+        
+        .report-section {
+            padding: 0;
+            page-break-inside: avoid;
+        }
+
+        .report-section h3 {
+            margin-top: 0;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #000;
+            border-bottom: 1px solid #000;
+            padding-bottom: 8px;
+        }
+
+        .report-section table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .report-section th, .report-section td {
+            text-align: left;
+            padding: 8px 4px;
+            border-bottom: 1px solid #ccc;
+            vertical-align: top;
+        }
+
+        .report-section th {
+            font-weight: normal;
+            width: 60%;
+        }
+        
+        .report-section td {
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .sub-text, .concentration-text {
+            font-size: 0.85em;
+            color: #333;
+            font-weight: normal;
+            display: block;
+        }
+
+        /* Disclaimer Styling */
+        .disclaimer {
+            background-color: #eee;
+            color: #000;
+            padding: 15px;
+            border: 1px solid #999;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        /* --- PRINT-SPECIFIC OVERRIDES --- */
+        @media print {
+            body {
+                background-color: #fff; padding: 10px; font-size: 10pt;
+            }
+            .container {
+                box-shadow: none; padding: 0; border: none; max-width: 100%;
+            }
+            .form-container, .btn, .disclaimer, h1 {
+                display: none;
+            }
+            #printableReport {
+                display: block !important; margin: 0; border: none; padding: 0;
+            }
+            .report-grid {
+                grid-template-columns: 1fr 1fr; gap: 20px;
+            }
+            .report-section th, .report-section td {
+                border-bottom: 1px solid #aaa;
+            }
+            .patient-header-box {
+                gap: 10px;
+                padding: 10px;
+            }
+            .patient-header-box div { font-size: 11pt; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="form-container">
+            <h1>Clinical Pediatric Emergency Calculator</h1>
+            <p>Enter patient details to calculate vital sign ranges, equipment sizes, and emergency doses.</p>
+            <div class="disclaimer">
+                <strong>Disclaimer:</strong> This tool is for informational purposes only and is not a substitute for professional clinical judgment. Dosing is based on standard pediatric guidelines (e.g., PALS). <strong>All calculations must be verified by a qualified healthcare professional.</strong>
+            </div>
+            <form id="pedsForm">
+                <div class="form-grid">
+                    <div class="form-group"><label for="patientName">Patient Name</label><input type="text" id="patientName" required></div>
+                    <div class="form-group"><label for="dob">Date of Birth</label><input type="date" id="dob" required></div>
+                    <div class="form-group"><label for="weight">Weight (kg)</label><input type="number" id="weight" step="0.1" required></div>
+                    <div class="form-group"><label for="height">Height (cm)</label><input type="number" id="height" step="0.1"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">Calculate & Generate Report</button>
+            </form>
+        </div>
+
+        <div id="printableReport">
+            <div class="patient-header-box">
+                <div><strong>Name:</strong> <span id="reportPatientName"></span></div>
+                <div><strong>DOB:</strong> <span id="reportDob"></span></div>
+                <div><strong>Age:</strong> <span id="reportAge"></span></div>
+                <div><strong>Weight:</strong> <span id="reportWeight"></span></div>
+            </div>
+
+            <div class="report-grid">
+                <div class="report-section">
+                    <h3>Airway & Equipment Sizing</h3>
+                    <table>
+                        <tr><th>Laryngeal Mask Airway (LMA)</th><td id="reportLMA"></td></tr>
+                        <tr><th>ETT Uncuffed Size</th><td id="reportEttUncuffed"></td></tr>
+                        <tr><th>ETT Cuffed Size</th><td id="reportEttCuffed"></td></tr>
+                        <tr><th>ETT Depth (Oral)</th><td id="reportEttDepth"></td></tr>
+                        <tr><th>Laryngoscope Blade</th><td id="reportLaryngoscope"></td></tr>
+                        <tr><th>NG / Orogastric Tube</th><td id="reportNgOg"></td></tr>
+                        <tr><th>Urinary Catheter (Foley)</th><td id="reportFoley"></td></tr>
+                        <tr><th>Chest Tube</th><td id="reportChestTube"></td></tr>
+                        <tr><th>IO Needle / CVC Size</th><td id="reportIoCvc"></td></tr>
+                    </table>
+                </div>
+
+                <div class="report-section">
+                    <h3>Vital Signs & Electrical Therapy</h3>
+                     <table>
+                        <tr><th>Heart Rate Range</th><td id="reportHr"></td></tr>
+                        <tr><th>Respiratory Rate Range</th><td id="reportRr"></td></tr>
+                        <tr><th>Systolic BP Range (5-95%)</th><td id="reportSystolicBP"></td></tr>
+                        <tr><th>Defibrillation (1st Shock)</th><td id="therapyDefib1"></td></tr>
+                        <tr><th>Defibrillation (2nd+ Shock)</th><td id="therapyDefib2"></td></tr>
+                        <tr><th>Synchronized Cardioversion</th><td id="therapyCardiovert"></td></tr>
+                    </table>
+                </div>
+
+                <div class="report-section">
+                    <h3>Resuscitation Medications</h3>
+                    <table>
+                        <tr><th>Adrenaline (Epinephrine) <span class="concentration-text">1:10,000 (0.1 mg/mL)</span></th><td id="medAdrenaline"></td></tr>
+                        <tr><th>Amiodarone <span class="concentration-text">50 mg/mL</span></th><td id="medAmiodarone"></td></tr>
+                        <tr><th>Lidocaine 2% <span class="concentration-text">20 mg/mL</span></th><td id="medLidocaine"></td></tr>
+                        <tr><th>Atropine <span class="concentration-text">0.1 mg/mL</span></th><td id="medAtropine"></td></tr>
+                        <tr><th>Naloxone <span class="concentration-text">0.4 mg/mL or 1 mg/mL</span></th><td id="medNaloxone"></td></tr>
+                        <tr><th>Calcium Chloride 10% <span class="concentration-text">100 mg/mL</span></th><td id="medCalcChlor"></td></tr>
+                        <tr><th>Calcium Gluconate 10% <span class="concentration-text">100 mg/mL</span></th><td id="medCalcGluc"></td></tr>
+                        <tr><th>Sodium Bicarbonate 8.4% <span class="concentration-text">1 mEq/mL</span></th><td id="medBicarb"></td></tr>
+                        <tr><th>Magnesium Sulfate 50% <span class="concentration-text">500 mg/mL</span></th><td id="medMagSulfate"></td></tr>
+                        <tr><th>Dextrose 10% Bolus</th><td id="medDextrose"></td></tr>
+                        <tr><th>Fluid Bolus (NS or LR)</th><td id="medSaline"></td></tr>
+                    </table>
+                </div>
+
+                <div class="report-section">
+                    <h3>Antiepileptic Loading Doses</h3>
+                     <table>
+                        <tr><th>Lorazepam (IV/IO) <span class="concentration-text">2 mg/mL or 4 mg/mL</span></th><td id="medLorazepam"></td></tr>
+                        <tr><th>Levetiracetam (IV) <span class="concentration-text">100 mg/mL</span></th><td id="medKeppra"></td></tr>
+                        <tr><th>Phenobarbital (IV) <span class="concentration-text">65 mg/mL</span></th><td id="medPhenobarb"></td></tr>
+                        <tr><th>Phenytoin (IV) <span class="concentration-text">50 mg/mL, give slow</span></th><td id="medPhenytoin"></td></tr>
+                    </table>
+                </div>
+
+                <div class="report-section">
+                    <h3>RSI & Sedation Medications</h3>
+                    <table>
+                        <tr><th>Ketamine (IV Sedation) <span class="concentration-text">10 mg/mL or 50 mg/mL</span></th><td id="medKetamine"></td></tr>
+                        <tr><th>Midazolam (IV/IO/IN) <span class="concentration-text">1 mg/mL or 5 mg/mL</span></th><td id="medMidazolam"></td></tr>
+                        <tr><th>Fentanyl (IV/IO/IN) <span class="concentration-text">50 mcg/mL</span></th><td id="medFentanyl"></td></tr>
+                        <tr><th>Rocuronium (RSI) <span class="concentration-text">10 mg/mL</span></th><td id="medRocuronium"></td></tr>
+                        <tr><th>Succinylcholine (RSI) <span class="concentration-text">20 mg/mL</span></th><td id="medSuccs"></td></tr>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Vasoactive Infusions (Example)</h3>
+                    <table>
+                        <tr><th>Epinephrine Infusion <span class="sub-text">Start 0.1 mcg/kg/min</span></th><td id="infusionEpi"></td></tr>
+                        <tr><th>Norepinephrine Infusion <span class="sub-text">Start 0.1 mcg/kg/min</span></th><td id="infusionNorepi"></td></tr>
+                        <tr><th>Dopamine Infusion <span class="sub-text">Start 5 mcg/kg/min</span></th><td id="infusionDopamine"></td></tr>
+                    </table>
+                </div>
+
+            </div>
+            <button onclick="window.print()" class="btn btn-secondary" style="width:100%; margin-top: 25px;">Print Report</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('pedsForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // --- GATHER & VALIDATE INPUTS ---
+            const patientName = document.getElementById('patientName').value;
+            const dob = new Date(document.getElementById('dob').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = document.getElementById('height').value ? parseFloat(document.getElementById('height').value) : null;
+            
+            if (isNaN(dob.getTime()) || isNaN(weight) || !patientName) {
+                alert("Please fill in Patient Name, Date of Birth, and Weight.");
+                return;
+            }
+
+            // --- CALCULATIONS ---
+            const today = new Date();
+            let ageYears = today.getFullYear() - dob.getFullYear();
+            let ageMonths = today.getMonth() - dob.getMonth();
+            if (ageMonths < 0 || (ageMonths === 0 && today.getDate() < dob.getDate())) {
+                ageYears--;
+                ageMonths = (ageMonths + 12) % 12;
+            }
+            const ageString = `${ageYears} years, ${ageMonths} months`;
+            const totalMonths = ageYears * 12 + ageMonths;
+            const roundToHalf = (value) => Math.round(value * 2) / 2;
+
+            // --- VITALS & THERAPY ---
+            let hrRange, rrRange, bp;
+            if (totalMonths < 1) { hrRange = "100-180"; rrRange = "40-60"; bp = { sbp: "60-90" }; } 
+            else if (totalMonths < 12) { hrRange = "100-160"; rrRange = "30-50"; bp = { sbp: "75-100" }; } 
+            else if (ageYears < 3) { hrRange = "90-150"; rrRange = "24-40"; bp = { sbp: "80-110" }; } 
+            else if (ageYears < 6) { hrRange = "80-140"; rrRange = "22-34"; bp = { sbp: "80-115" }; } 
+            else if (ageYears < 13) { hrRange = "70-120"; rrRange = "18-30"; bp = { sbp: "90-120" }; } 
+            else { hrRange = "60-100"; rrRange = "12-20"; bp = { sbp: "100-130" }; }
+            const defib1 = `${(2 * weight).toFixed(0)} J`;
+            const defib2 = `${(4 * weight).toFixed(0)} J`;
+            const cardiovert = `${(0.5 * weight).toFixed(1)} - ${(1 * weight).toFixed(1)} J`;
+
+            // --- EQUIPMENT ---
+            const ettUncuffed = roundToHalf(ageYears > 1 ? (ageYears / 4) + 4 : 3.5);
+            const ettCuffed = roundToHalf(ageYears > 1 ? (ageYears / 4) + 3.5 : 3.0);
+            const ettDepth = (ettCuffed * 3).toFixed(1);
+            let lmaSize;
+            if (weight < 5) lmaSize = "1";
+            else if (weight < 10) lmaSize = "1.5";
+            else if (weight < 20) lmaSize = "2";
+            else if (weight < 30) lmaSize = "2.5";
+            else if (weight < 50) lmaSize = "3";
+            else lmaSize = "4";
+            let laryngoscopeBlade;
+            if (totalMonths < 1) laryngoscopeBlade = "Miller 0";
+            else if (totalMonths < 12) laryngoscopeBlade = "Miller 1";
+            else if (ageYears < 3) laryngoscopeBlade = "Miller 2 or Mac 2";
+            else laryngoscopeBlade = "Mac 3-4";
+
+            // --- MEDICATIONS (Dose and Volume) ---
+            const medAdrenaline = `${(0.01 * weight).toFixed(2)} mg (${(0.1 * weight).toFixed(1)} mL)`;
+            const medAmiodarone = `${(5 * weight).toFixed(1)} mg (${((5 * weight) / 50).toFixed(1)} mL)`;
+            const medLidocaine = `${(1 * weight).toFixed(1)} mg (${((1 * weight) / 20).toFixed(1)} mL)`;
+            const medAtropine = `${Math.min(0.5, Math.max(0.1, 0.02 * weight)).toFixed(2)} mg (${(Math.min(0.5, Math.max(0.1, 0.02 * weight)) / 0.1).toFixed(1)} mL)`;
+            const medNaloxone = `${Math.min(2, 0.1 * weight).toFixed(2)} mg`;
+            const medCalcChlor = `20 mg/kg = ${(20 * weight).toFixed(0)} mg (${(0.2 * weight).toFixed(1)} mL)`;
+            const medCalcGluc = `60 mg/kg = ${(60 * weight).toFixed(0)} mg (${(0.6 * weight).toFixed(1)} mL)`;
+            const medBicarb = `${(1 * weight).toFixed(1)} mEq (${(1 * weight).toFixed(1)} mL)`;
+            const medMagSulfate = `50 mg/kg = ${(50 * weight).toFixed(0)} mg (${((50*weight)/500).toFixed(1)} mL)`;
+            const medDextrose = `${(5 * weight).toFixed(1)} mL of D10%`;
+            const medSaline = `${(20 * weight).toFixed(0)} mL`;
+            const medLorazepam = `0.1 mg/kg = ${Math.min(4, 0.1 * weight).toFixed(2)} mg`;
+            const medKeppra = `60 mg/kg = ${Math.min(4500, 60 * weight).toFixed(0)} mg (${(Math.min(4500, 60 * weight) / 100).toFixed(1)} mL)`;
+            const medPhenobarb = `20 mg/kg = ${(20 * weight).toFixed(0)} mg (${((20 * weight) / 65).toFixed(1)} mL)`;
+            const medPhenytoin = `20 mg/kg = ${(20 * weight).toFixed(0)} mg (${((20 * weight) / 50).toFixed(1)} mL)`;
+            const medKetamine = `1.5 mg/kg = ${(1.5 * weight).toFixed(1)} mg`;
+            const medMidazolam = `0.1 mg/kg = ${(0.1 * weight).toFixed(2)} mg`;
+            const medFentanyl = `1 mcg/kg = ${(1 * weight).toFixed(1)} mcg (${((1 * weight) / 50).toFixed(1)} mL)`;
+            const medRocuronium = `1.2 mg/kg = ${(1.2 * weight).toFixed(1)} mg (${((1.2 * weight) / 10).toFixed(1)} mL)`;
+            const medSuccs = `2 mg/kg = ${(2 * weight).toFixed(1)} mg (${((2 * weight) / 20).toFixed(1)} mL)`;
+            const infusionRate = (rate) => `${(rate * weight * 60 / 16.67).toFixed(1)} mL/hr`;
+            const infusionEpi = `Std drip: 1mg in 100mL. Rate: ${infusionRate(0.1)}`;
+            
+            // --- POPULATE REPORT ---
+            document.getElementById('reportPatientName').textContent = patientName;
+            document.getElementById('reportDob').textContent = dob.toLocaleDateString();
+            document.getElementById('reportAge').textContent = ageString;
+            document.getElementById('reportWeight').textContent = `${weight.toFixed(1)} kg`;
+            document.getElementById('reportHr').textContent = `${hrRange} bpm`;
+            document.getElementById('reportRr').textContent = `${rrRange}/min`;
+            document.getElementById('reportSystolicBP').textContent = `${bp.sbp} mmHg`;
+            document.getElementById('therapyDefib1').textContent = defib1;
+            document.getElementById('therapyDefib2').textContent = defib2;
+            document.getElementById('therapyCardiovert').textContent = cardiovert;
+            document.getElementById('reportLMA').textContent = `Size ${lmaSize}`;
+            document.getElementById('reportEttUncuffed').textContent = `${ettUncuffed} mm`;
+            document.getElementById('reportEttCuffed').textContent = `${ettCuffed} mm`;
+            document.getElementById('reportEttDepth').textContent = `${ettDepth} cm at lips`;
+            document.getElementById('reportLaryngoscope').textContent = laryngoscopeBlade;
+            document.getElementById('reportNgOg').textContent = `${roundToHalf(ettUncuffed * 2)} Fr`;
+            document.getElementById('reportFoley').textContent = `${roundToHalf(ettUncuffed * 2)} Fr`;
+            document.getElementById('reportChestTube').textContent = `${roundToHalf(ettUncuffed * 4)} Fr`;
+            document.getElementById('reportIoCvc').textContent = `15-18G IO / 4-5.5 Fr CVC`;
+            document.getElementById('medAdrenaline').textContent = medAdrenaline;
+            document.getElementById('medAmiodarone').textContent = medAmiodarone;
+            document.getElementById('medLidocaine').textContent = medLidocaine;
+            document.getElementById('medAtropine').textContent = medAtropine;
+            document.getElementById('medNaloxone').textContent = medNaloxone;
+            document.getElementById('medCalcChlor').textContent = medCalcChlor;
+            document.getElementById('medCalcGluc').textContent = medCalcGluc;
+            document.getElementById('medBicarb').textContent = medBicarb;
+            document.getElementById('medMagSulfate').textContent = medMagSulfate;
+            document.getElementById('medDextrose').textContent = medDextrose;
+            document.getElementById('medSaline').textContent = medSaline;
+            document.getElementById('medLorazepam').textContent = medLorazepam;
+            document.getElementById('medKeppra').textContent = medKeppra;
+            document.getElementById('medPhenobarb').textContent = medPhenobarb;
+            document.getElementById('medPhenytoin').textContent = medPhenytoin;
+            document.getElementById('medKetamine').textContent = medKetamine;
+            document.getElementById('medMidazolam').textContent = medMidazolam;
+            document.getElementById('medFentanyl').textContent = medFentanyl;
+            document.getElementById('medRocuronium').textContent = medRocuronium;
+            document.getElementById('medSuccs').textContent = medSuccs;
+            document.getElementById('infusionEpi').textContent = `Mix 1mg/100mL NS. 0.1mcg/kg/min = ${(0.1*weight*60/10).toFixed(1)} mL/hr`;
+            document.getElementById('infusionNorepi').textContent = `Mix 1mg/100mL NS. 0.1mcg/kg/min = ${(0.1*weight*60/10).toFixed(1)} mL/hr`;
+            document.getElementById('infusionDopamine').textContent = `Mix 400mg/250mL NS. 5mcg/kg/min = ${(5*weight*60/1600).toFixed(1)} mL/hr`;
+
+            // --- SHOW REPORT ---
+            document.getElementById('printableReport').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
